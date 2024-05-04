@@ -3,14 +3,14 @@
 pragma solidity 0.8.19;
 
 /**
-    @title Prisma Core
+    @title BBL Core
     @notice Single source of truth for system-wide values and contract ownership.
 
-            Ownership of this contract should be the Prisma DAO via `AdminVoting`.
-            Other ownable Prisma contracts inherit their ownership from this contract
-            using `PrismaOwnable`.
+            Ownership of this contract should be the BBL DAO via `AdminVoting`.
+            Other ownable BBL contracts inherit their ownership from this contract
+            using `BBLOwnable`.
  */
-contract PrismaCore {
+contract BBLCore {
     address public feeReceiver;
     address public priceFeed;
 
