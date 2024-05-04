@@ -2,19 +2,19 @@
 
 pragma solidity 0.8.19;
 
-import "../dependencies/PrismaOwnable.sol";
+import "../dependencies/BBLOwnable.sol";
 import "../dependencies/SystemStart.sol";
-import "../interfaces/IPrismaCore.sol";
+import "../interfaces/IBBLCore.sol";
 import "../interfaces/IIncentiveVoting.sol";
-import "../interfaces/IPrismaToken.sol";
+import "../interfaces/IBBLToken.sol";
 
 /**
-    @title Prisma Token Locker
-    @notice PRISMA tokens can be locked in this contract to receive "lock weight",
+    @title BBL Token Locker
+    @notice BBL tokens can be locked in this contract to receive "lock weight",
             which is used within `AdminVoting` and `IncentiveVoting` to vote on
             core protocol operations.
  */
-contract TokenLocker is PrismaOwnable, SystemStart {
+contract TokenLocker is BBLOwnable, SystemStart {
     // The maximum number of weeks that tokens may be locked for. Also determines the maximum
     // number of active locks that a single account may open. Weight is calculated as:
     // `[balance] * [weeks to unlock]`. Weights are stored as `uint40` and balances as `uint32`,
@@ -30,9 +30,9 @@ contract TokenLocker is PrismaOwnable, SystemStart {
     // cannot be violated or the system could break due to overflow.
     uint256 public immutable lockToTokenRatio;
 
-    IPrismaToken public immutable lockToken;
+    IBBLToken public immutable lockToken;
     IIncentiveVoting public immutable incentiveVoter;
-    IPrismaCore public immutable prismaCore;
+    IBBLCore public immutable BBLCore;
     address public immutable deploymentManager;
 
     bool public penaltyWithdrawalsEnabled;
@@ -97,15 +97,15 @@ contract TokenLocker is PrismaOwnable, SystemStart {
     event LocksWithdrawn(address indexed account, uint256 withdrawn, uint256 penalty);
 
     constructor(
-        address _prismaCore,
-        IPrismaToken _token,
+        address _BBLCore,
+        IBBLToken _token,
         IIncentiveVoting _voter,
         address _manager,
         uint256 _lockToTokenRatio
-    ) SystemStart(_prismaCore) PrismaOwnable(_prismaCore) {
+    ) SystemStart(_BBLCore) BBLOwnable(_BBLCore) {
         lockToken = _token;
         incentiveVoter = _voter;
-        prismaCore = IPrismaCore(_prismaCore);
+        BBLCore = IBBLCore(_BBLCore);
         deploymentManager = _manager;
 
         lockToTokenRatio = _lockToTokenRatio;
@@ -882,7 +882,7 @@ contract TokenLocker is PrismaOwnable, SystemStart {
         totalWeeklyWeights[systemWeek] = uint40(getTotalWeightWrite() - decreasedWeight);
 
         lockToken.transfer(msg.sender, amountToWithdraw);
-        lockToken.transfer(prismaCore.feeReceiver(), penaltyTotal);
+        lockToken.transfer(BBLCore.feeReceiver(), penaltyTotal);
         emit LocksWithdrawn(msg.sender, amountToWithdraw, penaltyTotal);
 
         return amountToWithdraw;

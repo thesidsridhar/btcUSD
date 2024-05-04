@@ -6,7 +6,7 @@ import "@openzeppelin/contracts/utils/Address.sol";
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "../../interfaces/IGaugeController.sol";
 import "../../interfaces/ILiquidityGauge.sol";
-import "../../dependencies/PrismaOwnable.sol";
+import "../../dependencies/BBLOwnable.sol";
 
 interface IVotingEscrow {
     function create_lock(uint256 amount, uint256 unlock_time) external;
@@ -31,14 +31,14 @@ interface IAragon {
 }
 
 /**
-    @title Prisma Curve Proxy
+    @title BBL Curve Proxy
     @notice Locks CRV in Curve's `VotingEscrow` and interacts with various Curve
             contracts that require / provide benefit from the locked CRV position.
     @dev This contract cannot operate without approval in Curve's VotingEscrow
          smart wallet whitelist. See the Curve documentation for more info:
          https://docs.curve.fi/curve_dao/VotingEscrow/#smart-wallet-whitelist
  */
-contract CurveProxy is PrismaOwnable {
+contract CurveProxy is BBLOwnable {
     using Address for address;
     using SafeERC20 for IERC20;
 
@@ -82,13 +82,13 @@ contract CurveProxy is PrismaOwnable {
     }
 
     constructor(
-        address _prismaCore,
+        address _BBLCore,
         IERC20 _CRV,
         IGaugeController _gaugeController,
         IMinter _minter,
         IVotingEscrow _votingEscrow,
         IFeeDistributor _feeDistributor
-    ) PrismaOwnable(_prismaCore) {
+    ) BBLOwnable(_BBLCore) {
         CRV = _CRV;
         gaugeController = _gaugeController;
         minter = _minter;
@@ -169,7 +169,7 @@ contract CurveProxy is PrismaOwnable {
         feeDistributor.claim();
         uint256 amount = feeToken.balanceOf(address(this));
 
-        feeToken.transfer(PRISMA_CORE.feeReceiver(), amount);
+        feeToken.transfer(BBL_CORE.feeReceiver(), amount);
 
         return amount;
     }

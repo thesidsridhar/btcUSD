@@ -4,21 +4,21 @@ pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/token/ERC20/utils/SafeERC20.sol";
 import "@openzeppelin/contracts/token/ERC20/IERC20.sol";
-import "../dependencies/PrismaOwnable.sol";
+import "../dependencies/BBLOwnable.sol";
 import "../dependencies/SystemStart.sol";
-import "../dependencies/PrismaMath.sol";
+import "../dependencies/BBLMath.sol";
 import "../interfaces/IDebtToken.sol";
 import "../interfaces/IVault.sol";
 
 /**
-    @title Prisma Stability Pool
+    @title BBL Stability Pool
     @notice Based on Liquity's `StabilityPool`
             https://github.com/liquity/dev/blob/main/packages/contracts/contracts/StabilityPool.sol
 
-            Prisma's implementation is modified to support multiple collaterals. Deposits into
+            BBL's implementation is modified to support multiple collaterals. Deposits into
             the stability pool may be used to liquidate any supported collateral type.
  */
-contract StabilityPool is PrismaOwnable, SystemStart {
+contract StabilityPool is BBLOwnable, SystemStart {
     using SafeERC20 for IERC20;
 
     uint256 public constant DECIMAL_PRECISION = 1e18;
@@ -28,7 +28,7 @@ contract StabilityPool is PrismaOwnable, SystemStart {
     uint256 public constant emissionId = 0;
 
     IDebtToken public immutable debtToken;
-    IPrismaVault public immutable vault;
+    IBBLVault public immutable vault;
     address public immutable factory;
     address public immutable liquidationManager;
 
@@ -81,16 +81,16 @@ contract StabilityPool is PrismaOwnable, SystemStart {
     mapping(uint128 => mapping(uint128 => uint256[256])) public epochToScaleToSums;
 
     /*
-     * Similarly, the sum 'G' is used to calculate Prisma gains. During it's lifetime, each deposit d_t earns a Prisma gain of
+     * Similarly, the sum 'G' is used to calculate BBL gains. During it's lifetime, each deposit d_t earns a BBL gain of
      *  ( d_t * [G - G_t] )/P_t, where G_t is the depositor's snapshot of G taken at time t when  the deposit was made.
      *
-     *  Prisma reward events occur are triggered by depositor operations (new deposit, topup, withdrawal), and liquidations.
-     *  In each case, the Prisma reward is issued (i.e. G is updated), before other state changes are made.
+     *  BBL reward events occur are triggered by depositor operations (new deposit, topup, withdrawal), and liquidations.
+     *  In each case, the BBL reward is issued (i.e. G is updated), before other state changes are made.
      */
     mapping(uint128 => mapping(uint128 => uint256)) public epochToScaleToG;
 
-    // Error tracker for the error correction in the Prisma issuance calculation
-    uint256 public lastPrismaError;
+    // Error tracker for the error correction in the BBL issuance calculation
+    uint256 public lastBBLError;
     // Error trackers for the error correction in the offset calculation
     uint256[256] public lastCollateralError_Offset;
     uint256 public lastDebtLossError_Offset;
@@ -136,12 +136,12 @@ contract StabilityPool is PrismaOwnable, SystemStart {
     event RewardClaimed(address indexed account, address indexed recipient, uint256 claimed);
 
     constructor(
-        address _prismaCore,
+        address _BBLCore,
         IDebtToken _debtTokenAddress,
-        IPrismaVault _vault,
+        IBBLVault _vault,
         address _factory,
         address _liquidationManager
-    ) PrismaOwnable(_prismaCore) SystemStart(_prismaCore) {
+    ) BBLOwnable(_BBLCore) SystemStart(_BBLCore) {
         debtToken = _debtTokenAddress;
         vault = _vault;
         factory = _factory;
@@ -224,14 +224,14 @@ contract StabilityPool is PrismaOwnable, SystemStart {
 
     /*  provideToSP():
      *
-     * - Triggers a Prisma issuance, based on time passed since the last issuance. The Prisma issuance is shared between *all* depositors and front ends
+     * - Triggers a BBL issuance, based on time passed since the last issuance. The BBL issuance is shared between *all* depositors and front ends
      * - Tags the deposit with the provided front end tag param, if it's a new deposit
-     * - Sends depositor's accumulated gains (Prisma, collateral) to depositor
-     * - Sends the tagged front end's accumulated Prisma gains to the tagged front end
+     * - Sends depositor's accumulated gains (BBL, collateral) to depositor
+     * - Sends the tagged front end's accumulated BBL gains to the tagged front end
      * - Increases deposit and tagged front end's stake, and takes new snapshots for each.
      */
     function provideToSP(uint256 _amount) external {
-        require(!PRISMA_CORE.paused(), "Deposits are paused");
+        require(!BBL_CORE.paused(), "Deposits are paused");
         require(_amount > 0, "StabilityPool: Amount must be non-zero");
 
         _triggerRewardIssuance();
@@ -259,10 +259,10 @@ contract StabilityPool is PrismaOwnable, SystemStart {
 
     /*  withdrawFromSP():
      *
-     * - Triggers a Prisma issuance, based on time passed since the last issuance. The Prisma issuance is shared between *all* depositors and front ends
+     * - Triggers a BBL issuance, based on time passed since the last issuance. The BBL issuance is shared between *all* depositors and front ends
      * - Removes the deposit's front end tag if it is a full withdrawal
-     * - Sends all depositor's accumulated gains (Prisma, collateral) to depositor
-     * - Sends the tagged front end's accumulated Prisma gains to the tagged front end
+     * - Sends all depositor's accumulated gains (BBL, collateral) to depositor
+     * - Sends the tagged front end's accumulated BBL gains to the tagged front end
      * - Decreases deposit and tagged front end's stake, and takes new snapshots for each.
      *
      * If _amount > userDeposit, the user withdraws all of their compounded deposit.
@@ -278,7 +278,7 @@ contract StabilityPool is PrismaOwnable, SystemStart {
         _accrueDepositorCollateralGain(msg.sender);
 
         uint256 compoundedDebtDeposit = getCompoundedDebtDeposit(msg.sender);
-        uint256 debtToWithdraw = PrismaMath._min(_amount, compoundedDebtDeposit);
+        uint256 debtToWithdraw = BBLMath._min(_amount, compoundedDebtDeposit);
 
         _accrueRewards(msg.sender);
 
@@ -295,7 +295,7 @@ contract StabilityPool is PrismaOwnable, SystemStart {
         emit UserDepositChanged(msg.sender, newDeposit);
     }
 
-    // --- Prisma issuance functions ---
+    // --- BBL issuance functions ---
 
     function _triggerRewardIssuance() internal {
         _updateG(_vestedEmissions());
@@ -329,34 +329,34 @@ contract StabilityPool is PrismaOwnable, SystemStart {
         return duration * rewardRate;
     }
 
-    function _updateG(uint256 _prismaIssuance) internal {
+    function _updateG(uint256 _BBLIssuance) internal {
         uint256 totalDebt = totalDebtTokenDeposits; // cached to save an SLOAD
         /*
-         * When total deposits is 0, G is not updated. In this case, the Prisma issued can not be obtained by later
+         * When total deposits is 0, G is not updated. In this case, the BBL issued can not be obtained by later
          * depositors - it is missed out on, and remains in the balanceof the Treasury contract.
          *
          */
-        if (totalDebt == 0 || _prismaIssuance == 0) {
+        if (totalDebt == 0 || _BBLIssuance == 0) {
             return;
         }
 
-        uint256 prismaPerUnitStaked;
-        prismaPerUnitStaked = _computePrismaPerUnitStaked(_prismaIssuance, totalDebt);
+        uint256 BBLPerUnitStaked;
+        BBLPerUnitStaked = _computeBBLPerUnitStaked(_BBLIssuance, totalDebt);
         uint128 currentEpochCached = currentEpoch;
         uint128 currentScaleCached = currentScale;
-        uint256 marginalPrismaGain = prismaPerUnitStaked * P;
-        uint256 newG = epochToScaleToG[currentEpochCached][currentScaleCached] + marginalPrismaGain;
+        uint256 marginalBBLGain = BBLPerUnitStaked * P;
+        uint256 newG = epochToScaleToG[currentEpochCached][currentScaleCached] + marginalBBLGain;
         epochToScaleToG[currentEpochCached][currentScaleCached] = newG;
 
         emit G_Updated(newG, currentEpochCached, currentScaleCached);
     }
 
-    function _computePrismaPerUnitStaked(
-        uint256 _prismaIssuance,
+    function _computeBBLPerUnitStaked(
+        uint256 _BBLIssuance,
         uint256 _totalDebtTokenDeposits
     ) internal returns (uint256) {
         /*
-         * Calculate the Prisma-per-unit staked.  Division uses a "feedback" error correction, to keep the
+         * Calculate the BBL-per-unit staked.  Division uses a "feedback" error correction, to keep the
          * cumulative error low in the running total G:
          *
          * 1) Form a numerator which compensates for the floor division error that occurred the last time this
@@ -366,12 +366,12 @@ contract StabilityPool is PrismaOwnable, SystemStart {
          * 4) Store this error for use in the next correction when this function is called.
          * 5) Note: static analysis tools complain about this "division before multiplication", however, it is intended.
          */
-        uint256 prismaNumerator = (_prismaIssuance * DECIMAL_PRECISION) + lastPrismaError;
+        uint256 BBLNumerator = (_BBLIssuance * DECIMAL_PRECISION) + lastBBLError;
 
-        uint256 prismaPerUnitStaked = prismaNumerator / _totalDebtTokenDeposits;
-        lastPrismaError = prismaNumerator - (prismaPerUnitStaked * _totalDebtTokenDeposits);
+        uint256 BBLPerUnitStaked = BBLNumerator / _totalDebtTokenDeposits;
+        lastBBLError = BBLNumerator - (BBLPerUnitStaked * _totalDebtTokenDeposits);
 
-        return prismaPerUnitStaked;
+        return BBLPerUnitStaked;
     }
 
     // --- Liquidation functions ---
@@ -567,8 +567,8 @@ contract StabilityPool is PrismaOwnable, SystemStart {
     }
 
     /*
-     * Calculate the Prisma gain earned by a deposit since its last snapshots were taken.
-     * Given by the formula:  Prisma = d0 * (G - G(0))/P(0)
+     * Calculate the BBL gain earned by a deposit since its last snapshots were taken.
+     * Given by the formula:  BBL = d0 * (G - G(0))/P(0)
      * where G(0) and P(0) are the depositor's snapshots of the sum G and product P, respectively.
      * d0 is the last recorded deposit value.
      */
@@ -579,9 +579,9 @@ contract StabilityPool is PrismaOwnable, SystemStart {
         if (totalDebt == 0 || initialDeposit == 0) {
             return storedPendingReward[_depositor];
         }
-        uint256 prismaNumerator = (_vestedEmissions() * DECIMAL_PRECISION) + lastPrismaError;
-        uint256 prismaPerUnitStaked = prismaNumerator / totalDebt;
-        uint256 marginalPrismaGain = prismaPerUnitStaked * P;
+        uint256 BBLNumerator = (_vestedEmissions() * DECIMAL_PRECISION) + lastBBLError;
+        uint256 BBLPerUnitStaked = BBLNumerator / totalDebt;
+        uint256 marginalBBLGain = BBLPerUnitStaked * P;
 
         Snapshots memory snapshots = depositSnapshots[_depositor];
         uint128 epochSnapshot = snapshots.epoch;
@@ -589,11 +589,11 @@ contract StabilityPool is PrismaOwnable, SystemStart {
         uint256 firstPortion;
         uint256 secondPortion;
         if (scaleSnapshot == currentScale) {
-            firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot] - snapshots.G + marginalPrismaGain;
+            firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot] - snapshots.G + marginalBBLGain;
             secondPortion = epochToScaleToG[epochSnapshot][scaleSnapshot + 1] / SCALE_FACTOR;
         } else {
             firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot] - snapshots.G;
-            secondPortion = (epochToScaleToG[epochSnapshot][scaleSnapshot + 1] + marginalPrismaGain) / SCALE_FACTOR;
+            secondPortion = (epochToScaleToG[epochSnapshot][scaleSnapshot + 1] + marginalBBLGain) / SCALE_FACTOR;
         }
 
         return
@@ -611,16 +611,16 @@ contract StabilityPool is PrismaOwnable, SystemStart {
 
         Snapshots memory snapshots = depositSnapshots[_depositor];
 
-        return _getPrismaGainFromSnapshots(initialDeposit, snapshots);
+        return _getBBLGainFromSnapshots(initialDeposit, snapshots);
     }
 
-    function _getPrismaGainFromSnapshots(
+    function _getBBLGainFromSnapshots(
         uint256 initialStake,
         Snapshots memory snapshots
     ) internal view returns (uint256) {
         /*
-         * Grab the sum 'G' from the epoch at which the stake was made. The Prisma gain may span up to one scale change.
-         * If it does, the second portion of the Prisma gain is scaled by 1e9.
+         * Grab the sum 'G' from the epoch at which the stake was made. The BBL gain may span up to one scale change.
+         * If it does, the second portion of the BBL gain is scaled by 1e9.
          * If the gain spans no scale change, the second portion will be 0.
          */
         uint128 epochSnapshot = snapshots.epoch;
@@ -631,9 +631,9 @@ contract StabilityPool is PrismaOwnable, SystemStart {
         uint256 firstPortion = epochToScaleToG[epochSnapshot][scaleSnapshot] - G_Snapshot;
         uint256 secondPortion = epochToScaleToG[epochSnapshot][scaleSnapshot + 1] / SCALE_FACTOR;
 
-        uint256 prismaGain = (initialStake * (firstPortion + secondPortion)) / P_Snapshot / DECIMAL_PRECISION;
+        uint256 BBLGain = (initialStake * (firstPortion + secondPortion)) / P_Snapshot / DECIMAL_PRECISION;
 
-        return prismaGain;
+        return BBLGain;
     }
 
     // --- Compounded deposit and compounded front end stake ---
@@ -700,7 +700,7 @@ contract StabilityPool is PrismaOwnable, SystemStart {
         return compoundedStake;
     }
 
-    // --- Sender functions for Debt deposit, collateral gains and Prisma gains ---
+    // --- Sender functions for Debt deposit, collateral gains and BBL gains ---
     function claimCollateralGains(address recipient, uint256[] calldata collateralIndexes) public virtual {
         _accrueDepositorCollateralGain(msg.sender);
 

@@ -57,7 +57,7 @@ interface ICurveProxy {
 
     function CRV() external view returns (address);
 
-    function PRISMA_CORE() external view returns (address);
+    function BBL_CORE() external view returns (address);
 
     function crvFeePct() external view returns (uint64);
 

@@ -3,17 +3,17 @@
 pragma solidity 0.8.19;
 import "../interfaces/IAggregatorV3Interface.sol";
 import "@openzeppelin/contracts/utils/Address.sol";
-import "../dependencies/PrismaMath.sol";
-import "../dependencies/PrismaOwnable.sol";
+import "../dependencies/BBLMath.sol";
+import "../dependencies/BBLOwnable.sol";
 
 /**
-    @title Prisma Multi Token Price Feed
+    @title BBL Multi Token Price Feed
     @notice Based on Gravita's PriceFeed:
             https://github.com/Gravita-Protocol/Gravita-SmartContracts/blob/9b69d555f3567622b0f84df8c7f1bb5cd9323573/contracts/PriceFeed.sol
 
-            Prisma's implementation additionally caches price values within a block and incorporates exchange rate settings for derivative tokens (e.g. stETH -> wstETH).
+            BBL's implementation additionally caches price values within a block and incorporates exchange rate settings for derivative tokens (e.g. stETH -> wstETH).
  */
-contract PriceFeed is PrismaOwnable {
+contract PriceFeed is BBLOwnable {
     struct OracleRecord {
         IAggregatorV3Interface chainLinkOracle;
         uint8 decimals;
@@ -76,7 +76,7 @@ contract PriceFeed is PrismaOwnable {
         bool isEthIndexed;
     }
 
-    constructor(address _prismaCore, address ethFeed, OracleSetup[] memory oracles) PrismaOwnable(_prismaCore) {
+    constructor(address _BBLCore, address ethFeed, OracleSetup[] memory oracles) BBLOwnable(_BBLCore) {
         _setOracle(address(0), ethFeed, 3600, 0, 0, false);
         for (uint i = 0; i < oracles.length; i++) {
             OracleSetup memory o = oracles[i];
@@ -261,15 +261,15 @@ contract PriceFeed is PrismaOwnable {
         uint256 currentScaledPrice = _scalePriceByDigits(uint256(_currResponse.answer), decimals);
         uint256 prevScaledPrice = _scalePriceByDigits(uint256(_prevResponse.answer), decimals);
 
-        uint256 minPrice = PrismaMath._min(currentScaledPrice, prevScaledPrice);
-        uint256 maxPrice = PrismaMath._max(currentScaledPrice, prevScaledPrice);
+        uint256 minPrice = BBLMath._min(currentScaledPrice, prevScaledPrice);
+        uint256 maxPrice = BBLMath._max(currentScaledPrice, prevScaledPrice);
 
         /*
          * Use the larger price as the denominator:
          * - If price decreased, the percentage deviation is in relation to the previous price.
          * - If price increased, the percentage deviation is in relation to the current price.
          */
-        uint256 percentDeviation = ((maxPrice - minPrice) * PrismaMath.DECIMAL_PRECISION) / maxPrice;
+        uint256 percentDeviation = ((maxPrice - minPrice) * BBLMath.DECIMAL_PRECISION) / maxPrice;
 
         return percentDeviation > MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND;
     }

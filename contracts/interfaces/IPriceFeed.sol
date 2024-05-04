@@ -19,7 +19,7 @@ interface IPriceFeed {
 
     function MAX_PRICE_DEVIATION_FROM_PREVIOUS_ROUND() external view returns (uint256);
 
-    function PRISMA_CORE() external view returns (address);
+    function BBL_CORE() external view returns (address);
 
     function RESPONSE_TIMEOUT() external view returns (uint256);
 

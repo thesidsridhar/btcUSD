@@ -5,7 +5,7 @@ pragma solidity 0.8.19;
 import "@openzeppelin/contracts/token/ERC20/extensions/IERC20Metadata.sol";
 import "../../interfaces/ICurveProxy.sol";
 import "../../interfaces/IVault.sol";
-import "../../dependencies/PrismaOwnable.sol";
+import "../../dependencies/BBLOwnable.sol";
 
 interface IBooster {
     function deposit(uint256 _pid, uint256 _amount, bool _stake) external returns (bool);
@@ -31,19 +31,19 @@ interface IConvexStash {
 }
 
 /**
-    @title Prisma Convex Deposit Wrapper
+    @title BBL Convex Deposit Wrapper
     @notice Standard ERC20 interface around a deposit of a Curve LP token into Convex.
             Tokens are minted by depositing Curve LP tokens, and burned to receive the LP
-            tokens back. Holders may claim PRISMA emissions on top of the earned CRV and CVX.
+            tokens back. Holders may claim BBL emissions on top of the earned CRV and CVX.
  */
 contract ConvexDepositToken {
-    IERC20 public immutable PRISMA;
+    IERC20 public immutable BBL;
     IERC20 public immutable CRV;
     IERC20 public immutable CVX;
 
     IBooster public immutable booster;
     ICurveProxy public immutable curveProxy;
-    IPrismaVault public immutable vault;
+    IBBLVault public immutable vault;
 
     IERC20 public lpToken;
     uint256 public depositPid;
@@ -60,7 +60,7 @@ contract ConvexDepositToken {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    // each array relates to [PRISMA, CRV, CVX]
+    // each array relates to [BBL, CRV, CVX]
     uint256[3] public rewardIntegral;
     uint128[3] public rewardRate;
 
@@ -81,10 +81,10 @@ contract ConvexDepositToken {
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event LPTokenDeposited(address indexed lpToken, address indexed receiver, uint256 amount);
     event LPTokenWithdrawn(address indexed lpToken, address indexed receiver, uint256 amount);
-    event RewardClaimed(address indexed receiver, uint256 prismaAmount, uint256 crvAmount, uint256 cvxAmount);
+    event RewardClaimed(address indexed receiver, uint256 BBLAmount, uint256 crvAmount, uint256 cvxAmount);
 
-    constructor(IERC20 _prisma, IERC20 _CRV, IERC20 _CVX, IBooster _booster, ICurveProxy _proxy, IPrismaVault _vault) {
-        PRISMA = _prisma;
+    constructor(IERC20 _BBL, IERC20 _CRV, IERC20 _CVX, IBooster _booster, ICurveProxy _proxy, IBBLVault _vault) {
+        BBL = _BBL;
         CRV = _CRV;
         CVX = _CVX;
         booster = _booster;
@@ -107,8 +107,8 @@ contract ConvexDepositToken {
         IERC20(_lpToken).approve(address(booster), type(uint256).max);
 
         string memory _symbol = IERC20Metadata(_lpToken).symbol();
-        name = string.concat("Prisma ", _symbol, " Convex Deposit");
-        symbol = string.concat("prisma-", _symbol);
+        name = string.concat("BBL ", _symbol, " Convex Deposit");
+        symbol = string.concat("BBL-", _symbol);
 
         periodFinish = uint32(block.timestamp - 1);
     }
@@ -174,7 +174,7 @@ contract ConvexDepositToken {
 
     function claimReward(
         address receiver
-    ) external returns (uint256 prismaAmount, uint256 crvAmount, uint256 cvxAmount) {
+    ) external returns (uint256 BBLAmount, uint256 crvAmount, uint256 cvxAmount) {
         uint128[3] memory amounts = _claimReward(msg.sender, receiver);
         vault.transferAllocatedTokens(msg.sender, receiver, amounts[0]);
 
@@ -192,7 +192,7 @@ contract ConvexDepositToken {
 
     function claimableReward(
         address account
-    ) external view returns (uint256 prismaAmount, uint256 crvAmount, uint256 cvxAmount) {
+    ) external view returns (uint256 BBLAmount, uint256 crvAmount, uint256 cvxAmount) {
         uint256 updated = periodFinish;
         if (updated > block.timestamp) updated = block.timestamp;
         uint256 duration = updated - lastUpdate;
@@ -274,9 +274,9 @@ contract ConvexDepositToken {
     }
 
     function _fetchRewards() internal {
-        uint256 prismaAmount;
+        uint256 BBLAmount;
         uint256 id = emissionId;
-        if (id > 0) prismaAmount = vault.allocateNewEmissions(id);
+        if (id > 0) BBLAmount = vault.allocateNewEmissions(id);
         crvRewards.getReward(address(this), false);
         cvxRewards.getReward();
 
@@ -297,12 +297,12 @@ contract ConvexDepositToken {
         uint256 _periodFinish = periodFinish;
         if (block.timestamp < _periodFinish) {
             uint256 remaining = _periodFinish - block.timestamp;
-            prismaAmount += remaining * rewardRate[0];
+            BBLAmount += remaining * rewardRate[0];
             crvAmount += remaining * rewardRate[1];
             cvxAmount += remaining * rewardRate[2];
         }
 
-        rewardRate[0] = uint128(prismaAmount / REWARD_DURATION);
+        rewardRate[0] = uint128(BBLAmount / REWARD_DURATION);
         rewardRate[1] = uint128(crvAmount / REWARD_DURATION);
         rewardRate[2] = uint128(cvxAmount / REWARD_DURATION);
 

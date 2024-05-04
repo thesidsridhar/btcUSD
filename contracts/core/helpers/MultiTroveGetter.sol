@@ -6,7 +6,7 @@ import "../../interfaces/ITroveManager.sol";
 import "../../interfaces/ISortedTroves.sol";
 import "../../interfaces/IFactory.sol";
 
-/*  Helper contract for grabbing Trove data for the front end. Not part of the core Prisma system. */
+/*  Helper contract for grabbing Trove data for the front end. Not part of the core BBL system. */
 contract MultiTroveGetter {
     struct CombinedTroveData {
         address owner;

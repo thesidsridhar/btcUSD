@@ -6,13 +6,13 @@ import "../../interfaces/IBorrowerOperations.sol";
 import "../../interfaces/ITroveManager.sol";
 import "../../interfaces/ISortedTroves.sol";
 import "../../interfaces/IFactory.sol";
-import "../../dependencies/PrismaBase.sol";
-import "../../dependencies/PrismaMath.sol";
+import "../../dependencies/BBLBase.sol";
+import "../../dependencies/BBLMath.sol";
 
-contract MultiCollateralHintHelpers is PrismaBase {
+contract MultiCollateralHintHelpers is BBLBase {
     IBorrowerOperations public immutable borrowerOperations;
 
-    constructor(address _borrowerOperationsAddress, uint256 _gasCompensation) PrismaBase(_gasCompensation) {
+    constructor(address _borrowerOperationsAddress, uint256 _gasCompensation) BBLBase(_gasCompensation) {
         borrowerOperations = IBorrowerOperations(_borrowerOperationsAddress);
     }
 
@@ -68,13 +68,13 @@ contract MultiCollateralHintHelpers is PrismaBase {
 
             if (netDebt > remainingDebt) {
                 if (netDebt > minNetDebt) {
-                    uint256 maxRedeemableDebt = PrismaMath._min(remainingDebt, netDebt - minNetDebt);
+                    uint256 maxRedeemableDebt = BBLMath._min(remainingDebt, netDebt - minNetDebt);
 
                     uint256 newColl = coll - ((maxRedeemableDebt * DECIMAL_PRECISION) / _price);
                     uint256 newDebt = netDebt - maxRedeemableDebt;
 
                     uint256 compositeDebt = _getCompositeDebt(newDebt);
-                    partialRedemptionHintNICR = PrismaMath._computeNominalCR(newColl, compositeDebt);
+                    partialRedemptionHintNICR = BBLMath._computeNominalCR(newColl, compositeDebt);
 
                     remainingDebt = remainingDebt - maxRedeemableDebt;
                 }
@@ -112,7 +112,7 @@ contract MultiCollateralHintHelpers is PrismaBase {
         }
 
         hintAddress = sortedTroves.getLast();
-        diff = PrismaMath._getAbsoluteDifference(_CR, troveManager.getNominalICR(hintAddress));
+        diff = BBLMath._getAbsoluteDifference(_CR, troveManager.getNominalICR(hintAddress));
         latestRandomSeed = _inputRandomSeed;
 
         uint256 i = 1;
@@ -125,7 +125,7 @@ contract MultiCollateralHintHelpers is PrismaBase {
             uint256 currentNICR = troveManager.getNominalICR(currentAddress);
 
             // check if abs(current - CR) > abs(closest - CR), and update closest if current is closer
-            uint256 currentDiff = PrismaMath._getAbsoluteDifference(currentNICR, _CR);
+            uint256 currentDiff = BBLMath._getAbsoluteDifference(currentNICR, _CR);
 
             if (currentDiff < diff) {
                 diff = currentDiff;
@@ -136,10 +136,10 @@ contract MultiCollateralHintHelpers is PrismaBase {
     }
 
     function computeNominalCR(uint256 _coll, uint256 _debt) external pure returns (uint256) {
-        return PrismaMath._computeNominalCR(_coll, _debt);
+        return BBLMath._computeNominalCR(_coll, _debt);
     }
 
     function computeCR(uint256 _coll, uint256 _debt, uint256 _price) external pure returns (uint256) {
-        return PrismaMath._computeCR(_coll, _debt, _price);
+        return BBLMath._computeCR(_coll, _debt, _price);
     }
 }

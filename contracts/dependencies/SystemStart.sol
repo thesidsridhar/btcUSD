@@ -2,17 +2,17 @@
 
 pragma solidity 0.8.19;
 
-import "../interfaces/IPrismaCore.sol";
+import "../interfaces/IBBLCore.sol";
 
 /**
-    @title Prisma System Start Time
+    @title BBL System Start Time
     @dev Provides a unified `startTime` and `getWeek`, used for emissions.
  */
 contract SystemStart {
     uint256 immutable startTime;
 
-    constructor(address prismaCore) {
-        startTime = IPrismaCore(prismaCore).startTime();
+    constructor(address BBLCore) {
+        startTime = IBBLCore(BBLCore).startTime();
     }
 
     function getWeek() public view returns (uint256 week) {

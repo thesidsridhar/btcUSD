@@ -27,7 +27,7 @@ interface IFactory {
 
     function setImplementations(address _troveManagerImpl, address _sortedTrovesImpl) external;
 
-    function PRISMA_CORE() external view returns (address);
+    function BBL_CORE() external view returns (address);
 
     function borrowerOperations() external view returns (address);
 

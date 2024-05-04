@@ -45,7 +45,7 @@ interface ITokenLocker {
 
     function MAX_LOCK_WEEKS() external view returns (uint256);
 
-    function PRISMA_CORE() external view returns (address);
+    function BBL_CORE() external view returns (address);
 
     function getAccountActiveLocks(
         address account,
@@ -81,7 +81,7 @@ interface ITokenLocker {
 
     function penaltyWithdrawalsEnabled() external view returns (bool);
 
-    function prismaCore() external view returns (address);
+    function BBLCore() external view returns (address);
 
     function totalDecayRate() external view returns (uint32);
 

@@ -11,23 +11,23 @@ import "../interfaces/ISortedTroves.sol";
 import "../interfaces/IVault.sol";
 import "../interfaces/IPriceFeed.sol";
 import "../dependencies/SystemStart.sol";
-import "../dependencies/PrismaBase.sol";
-import "../dependencies/PrismaMath.sol";
-import "../dependencies/PrismaOwnable.sol";
+import "../dependencies/BBLBase.sol";
+import "../dependencies/BBLMath.sol";
+import "../dependencies/BBLOwnable.sol";
 
 /**
-    @title Prisma Trove Manager
+    @title BBL Trove Manager
     @notice Based on Liquity's `TroveManager`
             https://github.com/liquity/dev/blob/main/packages/contracts/contracts/TroveManager.sol
 
-            Prisma's implementation is modified so that multiple `TroveManager` and `SortedTroves`
+            BBL's implementation is modified so that multiple `TroveManager` and `SortedTroves`
             contracts are deployed in tandem, with each pair managing troves of a single collateral
             type.
 
             Functionality related to liquidations has been moved to `LiquidationManager`. This was
             necessary to avoid the restriction on deployed bytecode size.
  */
-contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
+contract TroveManager is BBLBase, BBLOwnable, SystemStart {
     using SafeERC20 for IERC20;
 
     // --- Connected contract declarations ---
@@ -36,7 +36,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
     address public immutable liquidationManager;
     address immutable gasPoolAddress;
     IDebtToken public immutable debtToken;
-    IPrismaVault public immutable vault;
+    IBBLVault public immutable vault;
 
     IPriceFeed public priceFeed;
     IERC20 public collateralToken;
@@ -237,18 +237,18 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
     }
 
     constructor(
-        address _prismaCore,
+        address _BBLCore,
         address _gasPoolAddress,
         address _debtTokenAddress,
         address _borrowerOperationsAddress,
         address _vault,
         address _liquidationManager,
         uint256 _gasCompensation
-    ) PrismaOwnable(_prismaCore) PrismaBase(_gasCompensation) SystemStart(_prismaCore) {
+    ) BBLOwnable(_BBLCore) BBLBase(_gasCompensation) SystemStart(_BBLCore) {
         gasPoolAddress = _gasPoolAddress;
         debtToken = IDebtToken(_debtTokenAddress);
         borrowerOperationsAddress = _borrowerOperationsAddress;
-        vault = IPrismaVault(_vault);
+        vault = IBBLVault(_vault);
         liquidationManager = _liquidationManager;
     }
 
@@ -369,7 +369,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
     function collectInterests() external {
         uint256 interestPayableCached = interestPayable;
         require(interestPayableCached > 0, "Nothing to collect");
-        debtToken.mint(PRISMA_CORE.feeReceiver(), interestPayableCached);
+        debtToken.mint(BBL_CORE.feeReceiver(), interestPayableCached);
         interestPayable = 0;
     }
 
@@ -378,7 +378,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
     function fetchPrice() public returns (uint256) {
         IPriceFeed _priceFeed = priceFeed;
         if (address(_priceFeed) == address(0)) {
-            _priceFeed = IPriceFeed(PRISMA_CORE.priceFeed());
+            _priceFeed = IPriceFeed(BBL_CORE.priceFeed());
         }
         return _priceFeed.fetchPrice(address(collateralToken));
     }
@@ -466,7 +466,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
     function getNominalICR(address _borrower) public view returns (uint256) {
         (uint256 currentCollateral, uint256 currentDebt) = getTroveCollAndDebt(_borrower);
 
-        uint256 NICR = PrismaMath._computeNominalCR(currentCollateral, currentDebt);
+        uint256 NICR = BBLMath._computeNominalCR(currentCollateral, currentDebt);
         return NICR;
     }
 
@@ -474,7 +474,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
     function getCurrentICR(address _borrower, uint256 _price) public view returns (uint256) {
         (uint256 currentCollateral, uint256 currentDebt) = getTroveCollAndDebt(_borrower);
 
-        uint256 ICR = PrismaMath._computeCR(currentCollateral, currentDebt, _price);
+        uint256 ICR = BBLMath._computeCR(currentCollateral, currentDebt, _price);
         return ICR;
     }
 
@@ -538,7 +538,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
         uint256 redeemedDebtFraction = (_collateralDrawn * _price) / _totalDebtSupply;
 
         uint256 newBaseRate = decayedBaseRate + (redeemedDebtFraction / BETA);
-        newBaseRate = PrismaMath._min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
+        newBaseRate = BBLMath._min(newBaseRate, DECIMAL_PRECISION); // cap baseRate at a maximum of 100%
 
         // Update the baseRate state variable
         baseRate = newBaseRate;
@@ -559,7 +559,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
 
     function _calcRedemptionRate(uint256 _baseRate) internal view returns (uint256) {
         return
-            PrismaMath._min(
+            BBLMath._min(
                 redemptionFeeFloor + _baseRate,
                 maxRedemptionFee // cap at a maximum of 100%
             );
@@ -586,7 +586,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
     }
 
     function _calcBorrowingRate(uint256 _baseRate) internal view returns (uint256) {
-        return PrismaMath._min(borrowingFeeFloor + _baseRate, maxBorrowingFee);
+        return BBLMath._min(borrowingFeeFloor + _baseRate, maxBorrowingFee);
     }
 
     function getBorrowingFee(uint256 _debt) external view returns (uint256) {
@@ -615,7 +615,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
 
     function _calcDecayedBaseRate() internal view returns (uint256) {
         uint256 minutesPassed = (block.timestamp - lastFeeOperationTime) / SECONDS_IN_ONE_MINUTE;
-        uint256 decayFactor = PrismaMath._decPow(minuteDecayFactor, minutesPassed);
+        uint256 decayFactor = BBLMath._decPow(minuteDecayFactor, minutesPassed);
 
         return (baseRate * decayFactor) / DECIMAL_PRECISION;
     }
@@ -720,7 +720,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
 
         _requireUserAcceptsFee(totals.collateralFee, totals.totalCollateralDrawn, _maxFeePercentage);
 
-        _sendCollateral(PRISMA_CORE.feeReceiver(), totals.collateralFee);
+        _sendCollateral(BBL_CORE.feeReceiver(), totals.collateralFee);
 
         totals.collateralToSendToRedeemer = totals.totalCollateralDrawn - totals.collateralFee;
 
@@ -746,7 +746,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
     ) internal returns (SingleRedemptionValues memory singleRedemption) {
         Trove storage t = Troves[_borrower];
         // Determine the remaining amount (lot) to be redeemed, capped by the entire debt of the Trove minus the liquidation reserve
-        singleRedemption.debtLot = PrismaMath._min(_maxDebtAmount, t.debt - DEBT_GAS_COMPENSATION);
+        singleRedemption.debtLot = BBLMath._min(_maxDebtAmount, t.debt - DEBT_GAS_COMPENSATION);
 
         // Get the CollateralLot of equivalent value in USD
         singleRedemption.collateralLot = (singleRedemption.debtLot * DECIMAL_PRECISION) / _price;
@@ -762,7 +762,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
             _redeemCloseTrove(_borrower, DEBT_GAS_COMPENSATION, newColl);
             emit TroveUpdated(_borrower, 0, 0, 0, TroveManagerOperation.redeemCollateral);
         } else {
-            uint256 newNICR = PrismaMath._computeNominalCR(newColl, newDebt);
+            uint256 newNICR = BBLMath._computeNominalCR(newColl, newDebt);
             /*
              * If the provided hint is out of date, we bail since trying to reinsert without a good hint will almost
              * certainly result in running out of gas.
@@ -1063,7 +1063,7 @@ contract TroveManager is PrismaBase, PrismaOwnable, SystemStart {
             t.coll = newColl;
         }
 
-        uint256 newNICR = PrismaMath._computeNominalCR(newColl, newDebt);
+        uint256 newNICR = BBLMath._computeNominalCR(newColl, newDebt);
         sortedTroves.reInsert(_borrower, newNICR, _upperHint, _lowerHint);
         uint256 newStake = _updateStakeAndTotalStakes(t);
         emit TroveUpdated(_borrower, newDebt, newColl, newStake, TroveManagerOperation.adjust);

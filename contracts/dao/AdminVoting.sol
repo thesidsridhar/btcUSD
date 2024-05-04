@@ -8,9 +8,9 @@ import "../dependencies/SystemStart.sol";
 import "../interfaces/ITokenLocker.sol";
 
 /**
-    @title Prisma DAO Admin Voter
-    @notice Primary ownership contract for all Prisma contracts. Allows executing
-            arbitrary function calls only after a required percentage of PRISMA
+    @title BBL DAO Admin Voter
+    @notice Primary ownership contract for all BBL contracts. Allows executing
+            arbitrary function calls only after a required percentage of BBL
             lockers have signalled in favor of performing the action.
  */
 contract AdminVoting is DelegatedOps, SystemStart {
@@ -58,7 +58,7 @@ contract AdminVoting is DelegatedOps, SystemStart {
     uint256 public constant SET_GUARDIAN_PASSING_PCT = 5010;
 
     ITokenLocker public immutable tokenLocker;
-    IPrismaCore public immutable prismaCore;
+    IBBLCore public immutable BBLCore;
 
     Proposal[] proposalData;
     mapping(uint256 => Action[]) proposalPayloads;
@@ -76,14 +76,14 @@ contract AdminVoting is DelegatedOps, SystemStart {
     uint256 public passingPct;
 
     constructor(
-        address _prismaCore,
+        address _BBLCore,
         ITokenLocker _tokenLocker,
         uint256 _minCreateProposalPct,
         uint256 _passingPct,
         uint256 _bootstrapFinish
-    ) SystemStart(_prismaCore) {
+    ) SystemStart(_BBLCore) {
         tokenLocker = _tokenLocker;
-        prismaCore = IPrismaCore(_prismaCore);
+        BBLCore = IBBLCore(_BBLCore);
 
         minCreateProposalPct = _minCreateProposalPct;
         passingPct = _passingPct;
@@ -166,7 +166,7 @@ contract AdminVoting is DelegatedOps, SystemStart {
         uint256 accountWeight = tokenLocker.getAccountWeightAt(account, week);
         require(accountWeight >= minCreateProposalWeight(), "Not enough weight to propose");
 
-        // if the only action is `prismaCore.setGuardian()`, use
+        // if the only action is `BBLCore.setGuardian()`, use
         // `SET_GUARDIAN_PASSING_PCT` instead of `passingPct`
         uint256 _passingPct;
         bool isSetGuardianPayload = _isSetGuardianPayload(payload.length, payload[0]);
@@ -243,7 +243,7 @@ contract AdminVoting is DelegatedOps, SystemStart {
         @param id Proposal ID
      */
     function cancelProposal(uint256 id) external {
-        require(msg.sender == prismaCore.guardian(), "Only guardian can cancel proposals");
+        require(msg.sender == BBLCore.guardian(), "Only guardian can cancel proposals");
         require(id < proposalData.length, "Invalid ID");
 
         Action[] storage payload = proposalPayloads[id];
@@ -309,22 +309,22 @@ contract AdminVoting is DelegatedOps, SystemStart {
     }
 
     /**
-        @dev Unguarded method to allow accepting ownership transfer of `PrismaCore`
+        @dev Unguarded method to allow accepting ownership transfer of `BBLCore`
              at the end of the deployment sequence
      */
     function acceptTransferOwnership() external {
-        prismaCore.acceptTransferOwnership();
+        BBLCore.acceptTransferOwnership();
     }
 
     function _isSetGuardianPayload(uint256 payloadLength, Action memory action) internal view returns (bool) {
-        if (payloadLength == 1 && action.target == address(prismaCore)) {
+        if (payloadLength == 1 && action.target == address(BBLCore)) {
             bytes memory data = action.data;
             // Extract the call sig from payload data
             bytes4 sig;
             assembly {
                 sig := mload(add(data, 0x20))
             }
-            return sig == IPrismaCore.setGuardian.selector;
+            return sig == IBBLCore.setGuardian.selector;
         }
         return false;
     }

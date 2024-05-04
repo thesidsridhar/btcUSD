@@ -7,20 +7,20 @@ import "../../interfaces/ICurveProxy.sol";
 import "../../interfaces/IVault.sol";
 import "../../interfaces/ILiquidityGauge.sol";
 import "../../interfaces/IGaugeController.sol";
-import "../../dependencies/PrismaOwnable.sol";
+import "../../dependencies/BBLOwnable.sol";
 
 /**
-    @title Prisma Curve Deposit Wrapper
+    @title BBL Curve Deposit Wrapper
     @notice Standard ERC20 interface around a deposit of a Curve LP token into it's
             associated gauge. Tokens are minted by depositing Curve LP tokens, and
-            burned to receive the LP tokens back. Holders may claim PRISMA emissions
+            burned to receive the LP tokens back. Holders may claim BBL emissions
             on top of the earned CRV.
  */
 contract CurveDepositToken {
-    IERC20 public immutable PRISMA;
+    IERC20 public immutable BBL;
     IERC20 public immutable CRV;
     ICurveProxy public immutable curveProxy;
-    IPrismaVault public immutable vault;
+    IBBLVault public immutable vault;
     IGaugeController public immutable gaugeController;
 
     ILiquidityGauge public gauge;
@@ -36,7 +36,7 @@ contract CurveDepositToken {
     mapping(address => uint256) public balanceOf;
     mapping(address => mapping(address => uint256)) public allowance;
 
-    // each array relates to [PRISMA, CRV]
+    // each array relates to [BBL, CRV]
     uint256[2] public rewardIntegral;
     uint128[2] public rewardRate;
     uint32 public lastUpdate;
@@ -51,16 +51,16 @@ contract CurveDepositToken {
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event LPTokenDeposited(address indexed lpToken, address indexed receiver, uint256 amount);
     event LPTokenWithdrawn(address indexed lpToken, address indexed receiver, uint256 amount);
-    event RewardClaimed(address indexed receiver, uint256 prismaAmount, uint256 crvAmount);
+    event RewardClaimed(address indexed receiver, uint256 BBLAmount, uint256 crvAmount);
 
     constructor(
-        IERC20 _prisma,
+        IERC20 _BBL,
         IERC20 _CRV,
         ICurveProxy _curveProxy,
-        IPrismaVault _vault,
+        IBBLVault _vault,
         IGaugeController _gaugeController
     ) {
-        PRISMA = _prisma;
+        BBL = _BBL;
         CRV = _CRV;
         curveProxy = _curveProxy;
         vault = _vault;
@@ -76,8 +76,8 @@ contract CurveDepositToken {
         IERC20(_token).approve(address(gauge), type(uint256).max);
 
         string memory _symbol = IERC20Metadata(_token).symbol();
-        name = string.concat("Prisma ", _symbol, " Curve Deposit");
-        symbol = string.concat("prisma-", _symbol);
+        name = string.concat("BBL ", _symbol, " Curve Deposit");
+        symbol = string.concat("BBL-", _symbol);
 
         periodFinish = uint32(block.timestamp - 1);
     }
@@ -135,7 +135,7 @@ contract CurveDepositToken {
         return amounts;
     }
 
-    function claimReward(address receiver) external returns (uint256 prismaAmount, uint256 crvAmount) {
+    function claimReward(address receiver) external returns (uint256 BBLAmount, uint256 crvAmount) {
         uint128[2] memory amounts = _claimReward(msg.sender, receiver);
         vault.transferAllocatedTokens(msg.sender, receiver, amounts[0]);
 
@@ -151,7 +151,7 @@ contract CurveDepositToken {
         return amounts[0];
     }
 
-    function claimableReward(address account) external view returns (uint256 prismaAmount, uint256 crvAmount) {
+    function claimableReward(address account) external view returns (uint256 BBLAmount, uint256 crvAmount) {
         uint256 updated = periodFinish;
         if (updated > block.timestamp) updated = block.timestamp;
         uint256 duration = updated - lastUpdate;
@@ -233,9 +233,9 @@ contract CurveDepositToken {
     }
 
     function _fetchRewards() internal {
-        uint256 prismaAmount;
+        uint256 BBLAmount;
         uint256 id = emissionId;
-        if (id > 0) prismaAmount = vault.allocateNewEmissions(id);
+        if (id > 0) BBLAmount = vault.allocateNewEmissions(id);
 
         // only claim with non-zero weight to allow active receiver before Curve gauge is voted in
         uint256 crvAmount;
@@ -246,10 +246,10 @@ contract CurveDepositToken {
         uint256 _periodFinish = periodFinish;
         if (block.timestamp < _periodFinish) {
             uint256 remaining = _periodFinish - block.timestamp;
-            prismaAmount += remaining * rewardRate[0];
+            BBLAmount += remaining * rewardRate[0];
             crvAmount += remaining * rewardRate[1];
         }
-        rewardRate[0] = uint128(prismaAmount / REWARD_DURATION);
+        rewardRate[0] = uint128(BBLAmount / REWARD_DURATION);
         rewardRate[1] = uint128(crvAmount / REWARD_DURATION);
 
         lastUpdate = uint32(block.timestamp);

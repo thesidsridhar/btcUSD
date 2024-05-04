@@ -4,17 +4,17 @@ pragma solidity 0.8.19;
 
 import "../interfaces/IIncentiveVoting.sol";
 import "../interfaces/IVault.sol";
-import "../dependencies/PrismaOwnable.sol";
+import "../dependencies/BBLOwnable.sol";
 import "../dependencies/SystemStart.sol";
 
 /**
-    @title Prisma Emission Schedule
-    @notice Calculates weekly PRISMA emissions. The weekly amount is determined
+    @title BBL Emission Schedule
+    @notice Calculates weekly BBL emissions. The weekly amount is determined
             as a percentage of the remaining unallocated supply. Over time the
             reward rate will decay to dust as it approaches the maximum supply,
             but should not reach zero for a Very Long Time.
  */
-contract EmissionSchedule is PrismaOwnable, SystemStart {
+contract EmissionSchedule is BBLOwnable, SystemStart {
     event WeeklyPctScheduleSet(uint64[2][] schedule);
     event LockParametersSet(uint256 lockWeeks, uint256 lockDecayWeeks);
 
@@ -23,14 +23,14 @@ contract EmissionSchedule is PrismaOwnable, SystemStart {
     uint256 public constant MAX_LOCK_WEEKS = 52;
 
     IIncentiveVoting public immutable voter;
-    IPrismaVault public immutable vault;
+    IBBLVault public immutable vault;
 
     // current number of weeks that emissions are locked for when they are claimed
     uint64 public lockWeeks;
     // every `lockDecayWeeks`, the number of lock weeks is decreased by one
     uint64 public lockDecayWeeks;
 
-    // percentage of the unallocated PRISMA supply given as emissions in a week
+    // percentage of the unallocated BBL supply given as emissions in a week
     uint64 public weeklyPct;
 
     // [(week, weeklyPct)... ] ordered by week descending
@@ -38,14 +38,14 @@ contract EmissionSchedule is PrismaOwnable, SystemStart {
     uint64[2][] private scheduledWeeklyPct;
 
     constructor(
-        address _prismaCore,
+        address _BBLCore,
         IIncentiveVoting _voter,
-        IPrismaVault _vault,
+        IBBLVault _vault,
         uint64 _initialLockWeeks,
         uint64 _lockDecayWeeks,
         uint64 _weeklyPct,
         uint64[2][] memory _scheduledWeeklyPct
-    ) PrismaOwnable(_prismaCore) SystemStart(_prismaCore) {
+    ) BBLOwnable(_BBLCore) SystemStart(_BBLCore) {
         voter = _voter;
         vault = _vault;
 

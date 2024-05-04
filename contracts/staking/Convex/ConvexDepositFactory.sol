@@ -3,7 +3,7 @@
 pragma solidity 0.8.19;
 
 import "@openzeppelin/contracts/proxy/Clones.sol";
-import "../../dependencies/PrismaOwnable.sol";
+import "../../dependencies/BBLOwnable.sol";
 
 interface IConvexDepositToken {
     function initialize(uint256 pid) external;
@@ -14,10 +14,10 @@ interface IConvexDepositToken {
 }
 
 /**
-    @notice Prisma Convex Factory
-    @title Deploys clones of `ConvexDepositToken` as directed by the Prisma DAO
+    @notice BBL Convex Factory
+    @title Deploys clones of `ConvexDepositToken` as directed by the BBL DAO
  */
-contract ConvexFactory is PrismaOwnable {
+contract ConvexFactory is BBLOwnable {
     using Clones for address;
 
     address public depositTokenImpl;
@@ -28,10 +28,10 @@ contract ConvexFactory is PrismaOwnable {
     event ImplementationSet(address depositTokenImpl);
 
     constructor(
-        address _prismaCore,
+        address _BBLCore,
         address _depositTokenImpl,
         address[] memory _existingDeployments
-    ) PrismaOwnable(_prismaCore) {
+    ) BBLOwnable(_BBLCore) {
         depositTokenImpl = _depositTokenImpl;
         emit ImplementationSet(_depositTokenImpl);
 
@@ -46,7 +46,7 @@ contract ConvexFactory is PrismaOwnable {
 
     /**
         @dev After calling this function, the owner should also call `Vault.registerReceiver`
-             to enable PRISMA emissions on the newly deployed `ConvexDepositToken`
+             to enable BBL emissions on the newly deployed `ConvexDepositToken`
      */
     function deployNewInstance(uint256 pid) external onlyOwner {
         // cloning reverts if duplicating the same pid with the same implementation

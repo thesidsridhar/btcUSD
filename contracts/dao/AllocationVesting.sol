@@ -8,7 +8,7 @@ import { ITokenLocker } from "../interfaces/ITokenLocker.sol";
 
 /**
  * @title Vesting contract for team and investors
- * @author PrismaFi
+ * @author BBL Labs
  * @notice Vesting contract which allows transfer of future vesting claims
  */
 contract AllocationVesting is DelegatedOps {
