@@ -4,10 +4,10 @@ pragma solidity 0.8.19;
 
 import { OFT, IERC20, ERC20 } from "@layerzerolabs/solidity-examples/contracts/token/oft/OFT.sol";
 import { IERC3156FlashBorrower } from "@openzeppelin/contracts/interfaces/IERC3156FlashBorrower.sol";
-import "../interfaces/IPrismaCore.sol";
+import "../interfaces/IBBLCore.sol";
 
 /**
-    @title Prisma Debt Token "acUSD"
+    @title BBL Debt Token "bcUSD"
     @notice CDP minted against collateral deposits within `TroveManager`.
             This contract has a 1:n relationship with multiple deployments of `TroveManager`,
             each of which hold one collateral type which may be used to mint this token.
@@ -37,7 +37,7 @@ contract DebtToken is OFT {
     mapping(address => uint256) private _nonces;
 
     // --- Addresses ---
-    IPrismaCore private immutable _prismaCore;
+    IBBLCore private immutable _BBLCore;
     address public immutable stabilityPoolAddress;
     address public immutable borrowerOperationsAddress;
     address public immutable factory;
@@ -53,14 +53,14 @@ contract DebtToken is OFT {
         string memory _symbol,
         address _stabilityPoolAddress,
         address _borrowerOperationsAddress,
-        IPrismaCore prismaCore_,
+        IBBLCore BBLCore_,
         address _layerZeroEndpoint,
         address _factory,
         address _gasPool,
         uint256 _gasCompensation
     ) OFT(_name, _symbol, _layerZeroEndpoint) {
         stabilityPoolAddress = _stabilityPoolAddress;
-        _prismaCore = prismaCore_;
+        _BBLCore = BBLCore_;
         borrowerOperationsAddress = _borrowerOperationsAddress;
         factory = _factory;
         gasPool = _gasPool;
@@ -81,7 +81,7 @@ contract DebtToken is OFT {
         troveManager[_troveManager] = true;
     }
 
-    // --- Functions for intra-Prisma calls ---
+    // --- Functions for intra-BBL calls ---
 
     function mintWithGasCompensation(address _account, uint256 _amount) external returns (bool) {
         require(msg.sender == borrowerOperationsAddress);
@@ -202,7 +202,7 @@ contract DebtToken is OFT {
         );
         _spendAllowance(address(receiver), address(this), amount + fee);
         _burn(address(receiver), amount);
-        _transfer(address(receiver), _prismaCore.feeReceiver(), fee);
+        _transfer(address(receiver), _BBLCore.feeReceiver(), fee);
         return true;
     }
 
