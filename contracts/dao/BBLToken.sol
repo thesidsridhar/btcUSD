@@ -6,15 +6,15 @@ import "../interfaces/IERC2612.sol";
 import { OFT, IERC20, ERC20 } from "@layerzerolabs/solidity-examples/contracts/token/oft/OFT.sol";
 
 /**
-    @title Prisma Governance Token
+    @title BBL Governance Token
     @notice Given as an incentive for users of the protocol. Can be locked in `TokenLocker`
-            to receive lock weight, which gives governance power within the Prisma DAO.
+            to receive lock weight, which gives governance power within the BBL DAO.
  */
-contract PrismaToken is OFT, IERC2612 {
+contract BBLToken is OFT, IERC2612 {
     // --- ERC20 Data ---
 
-    string internal constant _NAME = "Prisma Governance Token";
-    string internal constant _SYMBOL = "PRISMA";
+    string internal constant _NAME = "BBL Governance Token";
+    string internal constant _SYMBOL = "BBL";
     string public constant version = "1";
 
     // --- EIP 2612 Data ---
@@ -83,7 +83,7 @@ contract PrismaToken is OFT, IERC2612 {
         bytes32 r,
         bytes32 s
     ) external override {
-        require(deadline >= block.timestamp, "PRISMA: expired deadline");
+        require(deadline >= block.timestamp, "BBL: expired deadline");
         bytes32 digest = keccak256(
             abi.encodePacked(
                 "\x19\x01",
@@ -92,7 +92,7 @@ contract PrismaToken is OFT, IERC2612 {
             )
         );
         address recoveredAddress = ecrecover(digest, v, r, s);
-        require(recoveredAddress == owner, "PRISMA: invalid signature");
+        require(recoveredAddress == owner, "BBL: invalid signature");
         _approve(owner, spender, amount);
     }
 

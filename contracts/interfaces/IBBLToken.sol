@@ -2,7 +2,7 @@
 
 pragma solidity ^0.8.0;
 
-interface IPrismaToken {
+interface IBBLToken {
     event Approval(address indexed owner, address indexed spender, uint256 value);
     event MessageFailed(uint16 _srcChainId, bytes _srcAddress, uint64 _nonce, bytes _payload, bytes _reason);
     event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
