@@ -13,8 +13,6 @@ In the event of a secret key leak, the only permitted action is to send the stak
 
 To address trust and security concerns, the design includes mechanisms for emulating covenants through a jury system, utilizing a multi-signature setup to mitigate the risk of malicious actions by jury members.
 
-![Screen Shot 2024-04-25 at 2.05.45 PM.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/ead55c70-8951-4ebd-8e4f-e1b6b49e7901/4a8e94d3-cecf-4809-9fcc-357e33cd5366/Screen_Shot_2024-04-25_at_2.05.45_PM.png)
-
 ## Why the Prisma Design?
 
 ---
@@ -30,7 +28,6 @@ To address trust and security concerns, the design includes mechanisms for emula
 
 ---
 
-![Screen Shot 2024-04-25 at 2.08.32 PM.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/ead55c70-8951-4ebd-8e4f-e1b6b49e7901/12ad3354-bd48-49ba-ab7a-5d83d9c84c81/Screen_Shot_2024-04-25_at_2.08.32_PM.png)
 
 Prisma's model, when adapted to a Bitcoin-based framework, operates in the decentralized finance (DeFi) ecosystem by utilizing Bitcoin's liquid staking tokens to offer novel financial services. Here's a reimagined outline of Prisma's operation, with specific elements replaced to fit a Bitcoin-centric protocol:
 
@@ -69,8 +66,6 @@ In addressing these critiques, the proposition of a Bitcoin-backed stablecoin em
 
 ---
 
-![Screen Shot 2024-04-25 at 2.10.50 PM.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/ead55c70-8951-4ebd-8e4f-e1b6b49e7901/c92429c2-cc91-47ed-aab7-916b396e61e8/Screen_Shot_2024-04-25_at_2.10.50_PM.png)
-
 The Babylon Bitcoin LST architecture introduces a novel approach to enhancing the security and liquidity of staked assets within the blockchain ecosystem. It is designed around three core security properties that ensure the integrity and functionality of the system:
 
 - **Fully Slashable PoS Security:** This feature ensures that if there is a safety violation, one-third of the bitcoin stake is automatically slashed. This mechanism is predicated on the premise that as long as two-thirds of the bitcoin stake adheres to the PoS protocol honestly, the PoS chain remains operational and secure. This design principle guarantees the security of the network by incentivizing honest participation and penalizing malfeasance.
@@ -88,8 +83,6 @@ The Babylon control plane plays a pivotal role in orchestrating the cross-chain 
 - **Recording Finality Signatures:** It maintains a record of the finality signatures for PoS chains, further bolstering the security and integrity of the staking process.
 
 By integrating these sophisticated mechanisms, the Babylon Bitcoin LST architecture heralds a new era in blockchain security and liquidity, offering a robust framework for the staking of bitcoin to secure remote chains. This innovative approach not only enhances the security of the blockchain ecosystem but also provides stakers with unprecedented liquidity and safety for their staked assets.
-
-![Screen Shot 2024-04-25 at 2.11.43 PM.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/ead55c70-8951-4ebd-8e4f-e1b6b49e7901/efec7b1a-2f27-42b8-91a8-c72494d2763a/Screen_Shot_2024-04-25_at_2.11.43_PM.png)
 
 ## How Can We Use the Babylon LST Architecture
 
