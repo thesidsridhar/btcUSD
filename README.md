@@ -1,3 +1,5 @@
+Bima
+
 > Inspired by the innovation of [**Prisma Finance**](https://prismafinance.com/), Bima brings to the forefront a stablecoin, USBD, which is collateralized by Babylon-staked Bitcoin.
 > 
 
