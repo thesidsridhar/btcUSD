@@ -1,8 +1,3 @@
-Bima
-
-> Inspired by the innovation of [**Prisma Finance**](https://prismafinance.com/), Bima brings to the forefront a stablecoin, USBD, which is collateralized by Babylon-staked Bitcoin.
-> 
-
 ## How Does Babylon’s Bitcoin Staking Design Work?
 
 ---
@@ -13,7 +8,6 @@ In the event of a secret key leak, the only permitted action is to send the stak
 
 To address trust and security concerns, the design includes mechanisms for emulating covenants through a jury system, utilizing a multi-signature setup to mitigate the risk of malicious actions by jury members.
 
-![Screen Shot 2024-04-25 at 2.05.45 PM.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/ead55c70-8951-4ebd-8e4f-e1b6b49e7901/4a8e94d3-cecf-4809-9fcc-357e33cd5366/Screen_Shot_2024-04-25_at_2.05.45_PM.png)
 
 ## Why the Prisma Design?
 
@@ -69,7 +63,6 @@ In addressing these critiques, the proposition of a Bitcoin-backed stablecoin em
 
 ---
 
-![Screen Shot 2024-04-25 at 2.10.50 PM.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/ead55c70-8951-4ebd-8e4f-e1b6b49e7901/c92429c2-cc91-47ed-aab7-916b396e61e8/Screen_Shot_2024-04-25_at_2.10.50_PM.png)
 
 The Babylon Bitcoin LST architecture introduces a novel approach to enhancing the security and liquidity of staked assets within the blockchain ecosystem. It is designed around three core security properties that ensure the integrity and functionality of the system:
 
@@ -89,7 +82,6 @@ The Babylon control plane plays a pivotal role in orchestrating the cross-chain 
 
 By integrating these sophisticated mechanisms, the Babylon’s Bitcoin LST architecture heralds a new era in blockchain security and liquidity, offering a robust framework for the staking of bitcoin to secure remote chains. This innovative approach not only enhances the security of the blockchain ecosystem but also provides stakers with unprecedented liquidity and safety for their staked assets.
 
-![Screen Shot 2024-04-25 at 2.11.43 PM.png](https://prod-files-secure.s3.us-west-2.amazonaws.com/ead55c70-8951-4ebd-8e4f-e1b6b49e7901/efec7b1a-2f27-42b8-91a8-c72494d2763a/Screen_Shot_2024-04-25_at_2.11.43_PM.png)
 
 ## How Can We Use the Babylon Architecture for LST Providers
 
